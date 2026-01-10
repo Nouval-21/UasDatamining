@@ -1,0 +1,311 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-4">🔍 Perhitungan Kemiripan Dokumen</h3>
+
+<!-- Search Form -->
+<div class="card p-4 mb-4">
+  <form method="POST" id="searchForm">
+    <label class="form-label fw-bold">Masukkan Query:</label>
+
+    <div class="input-group">
+      <input
+        type="text"
+        id="queryInput"
+        name="query"
+        class="form-control form-control-lg"
+        placeholder="contoh: modul python"
+        value="{{ query if query else '' }}"
+        list="suggestions"
+        required
+      />
+      <button class="btn btn-primary">
+        <i class="bi bi-search"></i> Hitung Similarity
+      </button>
+    </div>
+
+    <datalist id="suggestions">
+      <option value="modul"></option>
+      <option value="python"></option>
+      <option value="java"></option>
+      <option value="pembelajaran"></option>
+      <option value="dasar"></option>
+      <option value="program"></option>
+      <option value="objek"></option>
+    </datalist>
+  </form>
+
+  <div id="loadingSpinner" class="text-center mt-3" style="display: none">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-2">Sedang memproses query...</p>
+  </div>
+</div>
+
+<!-- Search History -->
+<div class="card p-3 mb-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h6 class="mb-0">🕐 Riwayat Pencarian</h6>
+    <button class="btn btn-sm btn-outline-danger" onclick="clearHistory()">
+      Hapus Semua
+    </button>
+  </div>
+  <div id="searchHistory" class="mt-2"></div>
+</div>
+
+{% if results is not none %}
+<div class="fade-in">
+  {% if total_found >= 3 %}
+  <div
+    class="card p-4 mb-4"
+    style="background: linear-gradient(135deg, #ffeaa7, #fdcb6e)"
+  >
+    <h5>🏆 Top 3 Dokumen Paling Relevan</h5>
+    <ol>
+      {% for filename, score in results[:3] %}
+      <li>
+        <strong>{{ filename }}</strong>
+        <span class="badge bg-success">{{ "%.0f"|format(score * 100) }}%</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <!-- Results Table -->
+  <div class="card p-4 mb-4">
+    <h5 class="mb-1">
+      📊 Hasil Query: "<span class="text-primary">{{ query }}</span>"
+    </h5>
+
+    {% if total_found > 0 %}
+    <p class="text-muted">
+      Ditemukan <b class="text-success">{{ total_found }}</b> dokumen relevan
+    </p>
+    <a href="/export-csv/{{ query }}" class="btn btn-success btn-sm">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+    {% endif %} {% if total_found > 0 %}
+    <div class="table-responsive mt-3">
+      <table class="table table-hover">
+        <thead class="table-primary">
+          <tr>
+            <th>No</th>
+            <th>Dokumen</th>
+            <th>Score</th>
+            <th>Match %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for filename, score in results %} {% set pct = score * 100 %}
+          <tr>
+            <td class="fw-bold">{{ loop.index }}</td>
+            <td>
+              <a href="/process/{{ filename }}" class="text-decoration-none">
+                {% if filename.endswith('.pdf') %}📄{% elif
+                filename.endswith('.docx') %}📝{% else %}📋{% endif %}
+                <span class="filename-text">{{ filename }}</span>
+              </a>
+            </td>
+            <td>
+              <code class="text-primary">{{ "%.4f"|format(score) }}</code>
+            </td>
+            <td>
+              {% if pct >= 5 %}
+              <span class="badge bg-success">{{ "%.0f"|format(pct) }}%</span>
+              {% elif pct >= 1 %}
+              <span class="badge bg-warning text-dark"
+                >{{ "%.0f"|format(pct) }}%</span
+              >
+              {% else %}
+              <span class="badge bg-secondary">{{ "%.0f"|format(pct) }}%</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="alert alert-warning mt-3">
+      <h5>😕 Tidak ada dokumen relevan</h5>
+      <p>Coba gunakan kata kunci yang lebih spesifik.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if total_found > 0 %}
+  <div class="card p-4 mb-4">
+    <h5 class="mb-3">📊 Visualisasi Similarity Score</h5>
+    <canvas id="similarityChart" style="max-height: 400px"></canvas>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Inject Chart Data -->
+{% if results and total_found > 0 %}
+<script id="chartData" type="application/json">
+  {
+    "labels": [
+      {% for filename, score in results %}
+      "{{ filename[:35]|replace('"', '\\"') }}..."{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ],
+    "values": [
+      {% for filename, score in results %}
+      {{ score }}{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+</script>
+{% endif %}
+
+<!-- Inject Query for Highlighting -->
+{% if query %}
+<script id="queryData" type="application/json">
+  {
+    "query": "{{ query|replace('"', '\\"')|replace('\\', '\\\\') }}"
+  }
+</script>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Chart Initialization
+  document.addEventListener("DOMContentLoaded", function () {
+    var chartDataEl = document.getElementById("chartData");
+
+    if (chartDataEl) {
+      var chartData = JSON.parse(chartDataEl.textContent);
+      var labels = chartData.labels;
+      var values = chartData.values;
+
+      var colors = values.map(function (v) {
+        if (v >= 0.05) return "rgba(40,167,69,0.8)";
+        if (v >= 0.01) return "rgba(255,193,7,0.8)";
+        return "rgba(108,117,125,0.8)";
+      });
+
+      new Chart(document.getElementById("similarityChart"), {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: colors,
+              borderColor: colors.map(function (c) {
+                return c.replace("0.8", "1");
+              }),
+              borderWidth: 2,
+              borderRadius: 8,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    }
+  });
+
+  // Search History Functions
+  function displayHistory() {
+    var history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+    var div = document.getElementById("searchHistory");
+
+    if (history.length === 0) {
+      div.innerHTML = "<small class='text-muted'>Belum ada riwayat</small>";
+      return;
+    }
+
+    div.innerHTML = history
+      .map(function (q) {
+        var escaped = q.replace(/'/g, "\\'");
+        return (
+          '<button class="btn btn-sm btn-outline-primary me-2 mb-2" onclick="useQuery(\'' +
+          escaped +
+          "')\">" +
+          q +
+          "</button>"
+        );
+      })
+      .join("");
+  }
+
+  function useQuery(q) {
+    document.getElementById("queryInput").value = q;
+  }
+
+  function clearHistory() {
+    localStorage.removeItem("searchHistory");
+    displayHistory();
+  }
+
+  // Form Submit Handler
+  document.getElementById("searchForm").addEventListener("submit", function () {
+    document.getElementById("loadingSpinner").style.display = "block";
+  });
+
+  // Initialize History
+  displayHistory();
+
+  // Save Current Query to History
+  document.addEventListener("DOMContentLoaded", function () {
+    var queryDataEl = document.getElementById("queryData");
+
+    if (queryDataEl) {
+      var queryData = JSON.parse(queryDataEl.textContent);
+      var currentQuery = queryData.query;
+
+      // Save to history
+      var h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+      h = h.filter(function (x) {
+        return x !== currentQuery;
+      });
+      h.unshift(currentQuery);
+      h = h.slice(0, 5);
+      localStorage.setItem("searchHistory", JSON.stringify(h));
+      displayHistory();
+
+      // Highlight query in results
+      var q = currentQuery;
+      document.querySelectorAll(".filename-text").forEach(function (el) {
+        var raw = el.textContent;
+        var escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        var regex = new RegExp("(" + escapedQ + ")", "gi");
+        el.innerHTML = raw.replace(
+          regex,
+          '<mark style="background:yellow; font-weight:bold;">$1</mark>'
+        );
+      });
+    }
+  });
+</script>
+
+<style>
+  .fade-in {
+    animation: fadeIn 0.6s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+</style>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-4">Inverted Index</h3>
+
+<div class="card p-4">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Kata</th>
+        <th>Dokumen yang Mengandung</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for term, docs in index.items() %}
+      <tr>
+        <td><b>{{ term }}</b></td>
+        <td>{{ docs }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

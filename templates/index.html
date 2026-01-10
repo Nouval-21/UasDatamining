@@ -1,0 +1,120 @@
+{% extends "layout.html" %} {% block content %}
+
+<div class="row mb-4">
+  <div class="col-12">
+    <div
+      class="card p-4 text-center"
+      style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      "
+    >
+      <h2 class="mb-2">
+        <i class="bi bi-file-earmark-text-fill"></i> Daftar Dokumen
+      </h2>
+      <p class="mb-0">
+        Sistem Temu Balik Informasi dengan TF-IDF & Cosine Similarity
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">
+      <i class="bi bi-folder-fill text-primary"></i> File dalam folder
+      /documents
+    </h5>
+    <span class="badge bg-primary">{{ files|length }} Dokumen</span>
+  </div>
+</div>
+
+{% if files %}
+<div class="row">
+  {% for f in files %}
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 hover-card">
+      <div class="card-body d-flex flex-column text-center">
+        {% if f.endswith('.pdf') %}
+        <div
+          class="file-icon"
+          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+        >
+          <i class="bi bi-file-earmark-pdf-fill"></i>
+        </div>
+        <small class="text-muted">PDF Document</small>
+
+        {% elif f.endswith('.docx') %}
+        <div
+          class="file-icon"
+          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+        >
+          <i class="bi bi-file-earmark-word-fill"></i>
+        </div>
+        <small class="text-muted">Word Document</small>
+
+        {% elif f.endswith('.txt') %}
+        <div
+          class="file-icon"
+          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+        >
+          <i class="bi bi-file-earmark-text-fill"></i>
+        </div>
+        <small class="text-muted">Text File</small>
+
+        {% else %}
+        <div
+          class="file-icon"
+          style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+        >
+          <i class="bi bi-file-earmark-fill"></i>
+        </div>
+        <small class="text-muted">Document</small>
+        {% endif %}
+
+        <h6 class="card-title mt-3" style="min-height: 48px">
+          {{ f if f|length <= 40 else f[:37] + "..." }}
+        </h6>
+
+        <div class="mt-auto">
+          <a href="/process/{{ f }}" class="btn btn-primary w-100">
+            <i class="bi bi-eye-fill"></i> Lihat Preprocessing
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card p-5 text-center">
+  <i class="bi bi-folder-x" style="font-size: 5rem; color: #ccc"></i>
+  <h4 class="text-muted">Tidak ada file dalam folder</h4>
+  <p class="text-muted">Silakan tambahkan file di folder /documents</p>
+  <a href="/rebuild-cache" class="btn btn-primary"
+    ><i class="bi bi-arrow-clockwise"></i> Rebuild Cache</a
+  >
+</div>
+{% endif %}
+
+<style>
+  .file-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+  }
+  .hover-card {
+    transition: all 0.3s ease;
+  }
+  .hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  }
+</style>
+
+{% endblock %}

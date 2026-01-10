@@ -1,0 +1,218 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-4">📊 Statistik Dokumen</h3>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-4 mb-3">
+    <div
+      class="card h-100 text-center p-4"
+      style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      "
+    >
+      <div class="display-4 mb-2">
+        <i class="bi bi-file-earmark-text-fill"></i>
+      </div>
+      <h2 class="mb-2">{{ stats.total_documents }}</h2>
+      <p class="mb-0">Total Dokumen</p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-3">
+    <div
+      class="card h-100 text-center p-4"
+      style="
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+      "
+    >
+      <div class="display-4 mb-2">
+        <i class="bi bi-fonts"></i>
+      </div>
+      <h2 class="mb-2">{{ "{:,}".format(stats.total_words) }}</h2>
+      <p class="mb-0">Total Kata</p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-3">
+    <div
+      class="card h-100 text-center p-4"
+      style="
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+      "
+    >
+      <div class="display-4 mb-2">
+        <i class="bi bi-calculator-fill"></i>
+      </div>
+      <h2 class="mb-2">{{ stats.avg_words }}</h2>
+      <p class="mb-0">Rata-rata Kata/Dokumen</p>
+    </div>
+  </div>
+</div>
+
+<!-- Most Common Words -->
+<div class="card p-4 mb-4">
+  <h5 class="mb-3">🔥 10 Kata Paling Sering Muncul</h5>
+  <div class="row">
+    <div class="col-md-6">
+      <table class="table table-hover">
+        <thead class="table-primary">
+          <tr>
+            <th>No</th>
+            <th>Kata</th>
+            <th>Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set items = stats.most_common_words.items() | list %} {% for word,
+          count in items[:5] %}
+          <tr>
+            <td class="fw-bold">{{ loop.index }}</td>
+            <td>{{ word }}</td>
+            <td><span class="badge bg-primary">{{ count }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-md-6">
+      <table class="table table-hover">
+        <thead class="table-primary">
+          <tr>
+            <th>No</th>
+            <th>Kata</th>
+            <th>Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for word, count in items[5:10] %}
+          <tr>
+            <td class="fw-bold">{{ loop.index + 5 }}</td>
+            <td>{{ word }}</td>
+            <td><span class="badge bg-primary">{{ count }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Word Frequency Chart -->
+<div class="card p-4 mb-4">
+  <h5 class="mb-3">📈 Frekuensi Kata (Top 10)</h5>
+  <canvas id="wordFrequencyChart"></canvas>
+</div>
+
+<!-- Hidden JSON for Chart -->
+<script id="wordChartData" type="application/json">
+  {
+    "words": [
+      {% for word, count in items %}
+        "{{ word }}"{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    ],
+    "counts": [
+      {% for word, count in items %}
+        {{ count }}{% if not loop.last %}, {% endif %}
+      {% endfor %}
+    ]
+  }
+</script>
+
+<!-- Document List -->
+<div class="card p-4">
+  <h5 class="mb-3">📋 Daftar Dokumen & Jumlah Kata</h5>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-primary">
+        <tr>
+          <th>No</th>
+          <th>Nama Dokumen</th>
+          <th>Jumlah Kata</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in stats.documents %}
+        <tr>
+          <td class="fw-bold">{{ loop.index }}</td>
+          <td>
+            {% if doc.name.endswith('.pdf') %} 📄 {% elif
+            doc.name.endswith('.docx') %} 📝 {% else %} 📋 {% endif %} {{
+            doc.name }}
+          </td>
+          <td><span class="badge bg-info">{{ doc.word_count }} kata</span></td>
+          <td>
+            <a
+              href="/process/{{ doc.name }}"
+              class="btn btn-sm btn-outline-primary"
+            >
+              <i class="bi bi-eye"></i> Lihat
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const chartDataElement = document.getElementById("wordChartData");
+    if (!chartDataElement) return;
+
+    const data = JSON.parse(chartDataElement.textContent);
+    const ctx = document.getElementById("wordFrequencyChart");
+
+    if (!ctx) return;
+
+    new Chart(ctx.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: data.words,
+        datasets: [
+          {
+            label: "Frekuensi Kemunculan",
+            data: data.counts,
+            backgroundColor: "rgba(102,126,234,0.7)",
+            borderColor: "rgba(102,126,234,1)",
+            borderWidth: 2,
+            borderRadius: 8,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        plugins: { legend: { display: false } },
+      },
+    });
+  })();
+</script>
+
+<style>
+  .card:hover {
+    transform: none;
+  }
+  .display-4 {
+    font-size: 3rem;
+  }
+  @media (max-width: 768px) {
+    .display-4 {
+      font-size: 2rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+{% endblock %}

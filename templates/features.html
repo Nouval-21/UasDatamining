@@ -1,0 +1,24 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-4">Feature Selection (Top 20 TF-IDF)</h3>
+
+<div class="card p-4">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Kata</th>
+        <th>Skor TF-IDF</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for term, score in features %}
+      <tr>
+        <td>{{ term }}</td>
+        <td>{{ "%.4f"|format(score) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

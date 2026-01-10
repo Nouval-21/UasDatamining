@@ -1,0 +1,17 @@
+{% extends "layout.html" %} {% block content %}
+
+<h2 class="mb-3">Ringkasan Dokumen</h2>
+<h5>Nama File: {{ filename }}</h5>
+
+<div class="card mt-4">
+  <div class="card-header bg-warning">
+    <strong>Ringkasan (Summary)</strong>
+  </div>
+  <div class="card-body">
+    <p>{{ summary }}</p>
+  </div>
+</div>
+
+<a href="/" class="btn btn-secondary mt-4">Kembali</a>
+
+{% endblock %}
