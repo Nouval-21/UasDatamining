@@ -1,30 +1,7 @@
 {% extends "layout.html" %} 
 {% block content %}
-
-<!-- Hero Section -->
-<div class="card p-5 mb-4 text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-  <div class="display-4 mb-3">
-    <i class="bi bi-file-earmark-text-fill"></i>
-  </div>
-  <h2 class="mb-3">Sistem Information Retrieval</h2>
-  <p class="lead mb-4">
-    Text Preprocessing • Inverted Index • TF-IDF Similarity • Document Summarization
-  </p>
-  <div class="d-flex justify-content-center gap-3 flex-wrap">
-    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
-      <i class="bi bi-file-earmark-text"></i> {{ files|length }} Dokumen
-    </span>
-    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
-      <i class="bi bi-code-square"></i> Python + Flask
-    </span>
-    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
-      <i class="bi bi-diagram-3"></i> TF-IDF + Cosine
-    </span>
-  </div>
-</div>
-
 <!-- Quick Actions -->
-<div class="row mb-4">
+<!-- <div class="row mb-4">
   <div class="col-md-4">
     <div class="card h-100 hover-card">
       <div class="card-body text-center p-4">
@@ -32,7 +9,6 @@
           <i class="bi bi-search"></i>
         </div>
         <h5 class="mb-3">Pencarian Dokumen</h5>
-        <p class="text-muted mb-4">Cari dokumen relevan dengan query menggunakan TF-IDF dan Cosine Similarity</p>
         <a href="/similarity" class="btn btn-primary w-100">
           <i class="bi bi-search"></i> Mulai Pencarian
         </a>
@@ -47,27 +23,25 @@
           <i class="bi bi-file-text"></i>
         </div>
         <h5 class="mb-3">Ringkasan Dokumen</h5>
-        <p class="text-muted mb-4">Extractive summarization otomatis menggunakan TF-IDF sentence ranking</p>
         <a href="#documents" class="btn btn-success w-100" onclick="scrollToDocuments()">
           <i class="bi bi-list"></i> Pilih Dokumen
         </a>
       </div>
     </div>
-  </div>
+  </div> -->
   
-  <div class="col-md-4">
+  <!-- <div class="col-md-4">
     <div class="card h-100 hover-card">
       <div class="card-body text-center p-4">
         <div class="mb-3" style="font-size: 3rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
           <i class="bi bi-bar-chart-fill"></i>
         </div>
         <h5 class="mb-3">Statistik & Analisis</h5>
-        <p class="text-muted mb-4">Lihat statistik dokumen, kata tersering, dan feature selection</p>
         <a href="/statistics" class="btn btn-info w-100">
-          <i class="bi bi-graph-up"></i> Lihat Statistik
+          <i class="bi bi-graph-up"></i> cek Statistik
         </a>
       </div>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -81,7 +55,6 @@
         </div>
         <div class="flex-grow-1">
           <h5 class="mb-1">Inverted Index</h5>
-          <p class="text-muted mb-0 small">Struktur data untuk pencarian cepat</p>
         </div>
         <a href="/inverted-index" class="btn btn-outline-primary">
           <i class="bi bi-arrow-right"></i>
@@ -98,7 +71,6 @@
         </div>
         <div class="flex-grow-1">
           <h5 class="mb-1">Feature Selection</h5>
-          <p class="text-muted mb-0 small">Top-K fitur berdasarkan TF-IDF</p>
         </div>
         <a href="/features" class="btn btn-outline-primary">
           <i class="bi bi-arrow-right"></i>
@@ -126,7 +98,7 @@
         type="text" 
         id="searchDoc" 
         class="form-control form-control-lg" 
-        placeholder="🔍 Cari dokumen..." 
+        placeholder=" Cari Nama Dokumen..." 
         onkeyup="filterDocuments()"
       >
     </div>

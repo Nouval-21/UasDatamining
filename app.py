@@ -283,7 +283,11 @@ def compute_feature_selection(cache, k=20):
 @app.route("/features")
 def features():
     selected = compute_feature_selection(document_cache, 20)
-    return render_template("features.html", features=selected)
+    
+    # Get max score for progress bar calculation
+    max_score = selected[0][1] if selected else 1
+    
+    return render_template("features.html", features=selected, max_score=max_score)
 
 
 # ====================================================
