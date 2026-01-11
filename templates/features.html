@@ -1,24 +1,149 @@
-{% extends "layout.html" %} {% block content %}
+{% extends "layout.html" %} 
+{% block content %}
 
-<h3 class="mb-4">Feature Selection (Top 20 TF-IDF)</h3>
+<h3 class="mb-4">
+  <i class="bi bi-filter-circle-fill text-primary"></i> Feature Selection (Top 20 TF-IDF)
+</h3>
 
-<div class="card p-4">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Kata</th>
-        <th>Skor TF-IDF</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for term, score in features %}
-      <tr>
-        <td>{{ term }}</td>
-        <td>{{ "%.4f"|format(score) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<!-- Info Card -->
+<div class="card p-4 mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <h5 class="mb-2"><i class="bi bi-info-circle-fill"></i> Tentang Feature Selection</h5>
+      <p class="mb-0">Fitur-fitur ini dipilih berdasarkan skor TF-IDF global tertinggi dari semua dokumen. Kata dengan skor tinggi menunjukkan pentingnya dalam koleksi dokumen.</p>
+    </div>
+    <div class="col-md-4 text-center">
+      <div class="display-4"><i class="bi bi-stars"></i></div>
+      <p class="mb-0">Top {{ features|length }} Features</p>
+    </div>
+  </div>
 </div>
+
+<!-- Feature Table -->
+<div class="card p-4 mb-4">
+  <h5 class="mb-3"><i class="bi bi-table"></i> Daftar Fitur Terpilih</h5>
+  
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-primary">
+        <tr>
+          <th style="width: 10%">Rank</th>
+          <th style="width: 50%">Kata/Term</th>
+          <th style="width: 40%">Skor TF-IDF</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for term, score in features %}
+        {% if loop.first %}
+          {% set max_score = score %}
+        {% endif %}
+        <tr>
+          <td class="fw-bold text-center">
+            <span class="badge bg-primary">#{{ loop.index }}</span>
+          </td>
+          <td>
+            <i class="bi bi-tag-fill text-primary me-2"></i>
+            <strong>{{ term }}</strong>
+          </td>
+          <td>
+            {% set width_pct = (score / max_score * 100) if max_score > 0 else 0 %}
+            <div class="progress" style="height: 25px;">
+              <div 
+                class="progress-bar bg-gradient" 
+                role="progressbar" 
+                style="width: {{ width_pct|round(2) }}%; background: linear-gradient(90deg, #667eea, #764ba2);"
+                aria-valuenow="{{ score }}" 
+                aria-valuemin="0" 
+                aria-valuemax="{{ max_score }}">
+                <span class="fw-bold">{{ "%.4f"|format(score) }}</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Visualization -->
+<div class="card p-4">
+  <h5 class="mb-3"><i class="bi bi-bar-chart-fill"></i> Visualisasi TF-IDF Score</h5>
+  <canvas id="featureChart" style="max-height: 400px;"></canvas>
+</div>
+
+<!-- Chart Data -->
+<script id="chartData" type="application/json">
+{
+  "labels": [
+    {% for term, score in features %}
+    "{{ term|replace('"', '\\"') }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "scores": [
+    {% for term, score in features %}
+    {{ score }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const chartDataEl = document.getElementById('chartData');
+    if (!chartDataEl) return;
+    
+    try {
+      const data = JSON.parse(chartDataEl.textContent);
+      const ctx = document.getElementById('featureChart');
+      
+      if (!ctx || !data.labels || !data.scores) return;
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'TF-IDF Score',
+            data: data.scores,
+            backgroundColor: 'rgba(102, 126, 234, 0.7)',
+            borderColor: 'rgba(102, 126, 234, 1)',
+            borderWidth: 2,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return value.toFixed(4);
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Error creating chart:', err);
+    }
+  });
+</script>
+
+<style>
+  .progress-bar {
+    transition: width 1s ease-in-out;
+  }
+  
+  .table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+  }
+</style>
 
 {% endblock %}

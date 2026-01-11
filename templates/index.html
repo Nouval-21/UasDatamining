@@ -1,102 +1,238 @@
-{% extends "layout.html" %} {% block content %}
+{% extends "layout.html" %} 
+{% block content %}
 
+<!-- Hero Section -->
+<div class="card p-5 mb-4 text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+  <div class="display-4 mb-3">
+    <i class="bi bi-file-earmark-text-fill"></i>
+  </div>
+  <h2 class="mb-3">Sistem Information Retrieval</h2>
+  <p class="lead mb-4">
+    Text Preprocessing • Inverted Index • TF-IDF Similarity • Document Summarization
+  </p>
+  <div class="d-flex justify-content-center gap-3 flex-wrap">
+    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
+      <i class="bi bi-file-earmark-text"></i> {{ files|length }} Dokumen
+    </span>
+    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
+      <i class="bi bi-code-square"></i> Python + Flask
+    </span>
+    <span class="badge bg-light text-dark" style="font-size: 1rem; padding: 10px 20px;">
+      <i class="bi bi-diagram-3"></i> TF-IDF + Cosine
+    </span>
+  </div>
+</div>
+
+<!-- Quick Actions -->
 <div class="row mb-4">
-  <div class="col-12">
-    <div
-      class="card p-4 text-center"
-      style="
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-      "
-    >
-      <h2 class="mb-2">
-        <i class="bi bi-file-earmark-text-fill"></i> Daftar Dokumen
-      </h2>
-      <p class="mb-0">
-        Sistem Temu Balik Informasi dengan TF-IDF & Cosine Similarity
-      </p>
-    </div>
-  </div>
-</div>
-
-<div class="card p-4 mb-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">
-      <i class="bi bi-folder-fill text-primary"></i> File dalam folder
-      /documents
-    </h5>
-    <span class="badge bg-primary">{{ files|length }} Dokumen</span>
-  </div>
-</div>
-
-{% if files %}
-<div class="row">
-  {% for f in files %}
-  <div class="col-md-6 col-lg-4 mb-4">
+  <div class="col-md-4">
     <div class="card h-100 hover-card">
-      <div class="card-body d-flex flex-column text-center">
-        {% if f.endswith('.pdf') %}
-        <div
-          class="file-icon"
-          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
-        >
-          <i class="bi bi-file-earmark-pdf-fill"></i>
+      <div class="card-body text-center p-4">
+        <div class="mb-3" style="font-size: 3rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          <i class="bi bi-search"></i>
         </div>
-        <small class="text-muted">PDF Document</small>
-
-        {% elif f.endswith('.docx') %}
-        <div
-          class="file-icon"
-          style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
-        >
-          <i class="bi bi-file-earmark-word-fill"></i>
-        </div>
-        <small class="text-muted">Word Document</small>
-
-        {% elif f.endswith('.txt') %}
-        <div
-          class="file-icon"
-          style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
-        >
-          <i class="bi bi-file-earmark-text-fill"></i>
-        </div>
-        <small class="text-muted">Text File</small>
-
-        {% else %}
-        <div
-          class="file-icon"
-          style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
-        >
-          <i class="bi bi-file-earmark-fill"></i>
-        </div>
-        <small class="text-muted">Document</small>
-        {% endif %}
-
-        <h6 class="card-title mt-3" style="min-height: 48px">
-          {{ f if f|length <= 40 else f[:37] + "..." }}
-        </h6>
-
-        <div class="mt-auto">
-          <a href="/process/{{ f }}" class="btn btn-primary w-100">
-            <i class="bi bi-eye-fill"></i> Lihat Preprocessing
-          </a>
-        </div>
+        <h5 class="mb-3">Pencarian Dokumen</h5>
+        <p class="text-muted mb-4">Cari dokumen relevan dengan query menggunakan TF-IDF dan Cosine Similarity</p>
+        <a href="/similarity" class="btn btn-primary w-100">
+          <i class="bi bi-search"></i> Mulai Pencarian
+        </a>
       </div>
     </div>
   </div>
-  {% endfor %}
+  
+  <div class="col-md-4">
+    <div class="card h-100 hover-card">
+      <div class="card-body text-center p-4">
+        <div class="mb-3" style="font-size: 3rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          <i class="bi bi-file-text"></i>
+        </div>
+        <h5 class="mb-3">Ringkasan Dokumen</h5>
+        <p class="text-muted mb-4">Extractive summarization otomatis menggunakan TF-IDF sentence ranking</p>
+        <a href="#documents" class="btn btn-success w-100" onclick="scrollToDocuments()">
+          <i class="bi bi-list"></i> Pilih Dokumen
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card h-100 hover-card">
+      <div class="card-body text-center p-4">
+        <div class="mb-3" style="font-size: 3rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          <i class="bi bi-bar-chart-fill"></i>
+        </div>
+        <h5 class="mb-3">Statistik & Analisis</h5>
+        <p class="text-muted mb-4">Lihat statistik dokumen, kata tersering, dan feature selection</p>
+        <a href="/statistics" class="btn btn-info w-100">
+          <i class="bi bi-graph-up"></i> Lihat Statistik
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
-{% else %}
-<div class="card p-5 text-center">
-  <i class="bi bi-folder-x" style="font-size: 5rem; color: #ccc"></i>
-  <h4 class="text-muted">Tidak ada file dalam folder</h4>
-  <p class="text-muted">Silakan tambahkan file di folder /documents</p>
-  <a href="/rebuild-cache" class="btn btn-primary"
-    ><i class="bi bi-arrow-clockwise"></i> Rebuild Cache</a
-  >
+<!-- Additional Features -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card hover-card">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3" style="font-size: 2.5rem; color: #667eea;">
+          <i class="bi bi-book-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5 class="mb-1">Inverted Index</h5>
+          <p class="text-muted mb-0 small">Struktur data untuk pencarian cepat</p>
+        </div>
+        <a href="/inverted-index" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card hover-card">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3" style="font-size: 2.5rem; color: #f093fb;">
+          <i class="bi bi-funnel-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5 class="mb-1">Feature Selection</h5>
+          <p class="text-muted mb-0 small">Top-K fitur berdasarkan TF-IDF</p>
+        </div>
+        <a href="/features" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
-{% endif %}
+
+<!-- Documents Section -->
+<div id="documents" class="card mb-4">
+  <div class="card-header" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-folder-fill"></i> Daftar Dokumen
+      </h5>
+      <span class="badge bg-light text-dark">{{ files|length }} files</span>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if files %}
+    <!-- Search Box -->
+    <div class="mb-4">
+      <input 
+        type="text" 
+        id="searchDoc" 
+        class="form-control form-control-lg" 
+        placeholder="🔍 Cari dokumen..." 
+        onkeyup="filterDocuments()"
+      >
+    </div>
+    
+    <!-- Document Grid -->
+    <div class="row" id="documentGrid">
+      {% for f in files %}
+      <div class="col-md-6 col-lg-4 mb-4 doc-item">
+        <div class="card h-100 hover-card">
+          <div class="card-body text-center">
+            <!-- Icon -->
+            {% if f.endswith('.pdf') %}
+            <div class="file-icon mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <i class="bi bi-file-earmark-pdf-fill"></i>
+            </div>
+            <small class="text-muted">PDF Document</small>
+            
+            {% elif f.endswith('.docx') %}
+            <div class="file-icon mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <i class="bi bi-file-earmark-word-fill"></i>
+            </div>
+            <small class="text-muted">Word Document</small>
+            
+            {% elif f.endswith('.txt') %}
+            <div class="file-icon mb-3" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+              <i class="bi bi-file-earmark-text-fill"></i>
+            </div>
+            <small class="text-muted">Text File</small>
+            
+            {% else %}
+            <div class="file-icon mb-3" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+              <i class="bi bi-file-earmark-fill"></i>
+            </div>
+            <small class="text-muted">Document</small>
+            {% endif %}
+            
+            <!-- Filename -->
+            <h6 class="card-title mt-2 filename" style="min-height: 48px; line-height: 1.4;">
+              {{ f if f|length <= 35 else f[:32] + "..." }}
+            </h6>
+            
+            <!-- Actions -->
+            <div class="btn-group w-100 mt-3" role="group">
+              <a href="/process/{{ f }}" class="btn btn-sm btn-outline-primary" title="Preprocessing">
+                <i class="bi bi-gear-fill"></i>
+              </a>
+              <a href="/summary/{{ f }}" class="btn btn-sm btn-outline-success" title="Ringkasan">
+                <i class="bi bi-file-text"></i>
+              </a>
+              <a href="/download/{{ f }}" class="btn btn-sm btn-outline-info" title="Download">
+                <i class="bi bi-download"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <!-- No Results -->
+    <div id="noResults" class="alert alert-warning text-center" style="display: none;">
+      <i class="bi bi-search"></i> Tidak ada dokumen yang cocok dengan pencarian.
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+      <i class="bi bi-folder-x" style="font-size: 5rem; color: #ddd;"></i>
+      <h4 class="text-muted mt-3">Tidak ada dokumen</h4>
+      <p class="text-muted">Tambahkan file (.txt, .pdf, .docx) ke folder <code>/documents</code></p>
+      <p class="text-muted small">Restart aplikasi untuk memuat dokumen baru</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function scrollToDocuments() {
+    document.getElementById('documents').scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  function filterDocuments() {
+    const input = document.getElementById('searchDoc');
+    const filter = input.value.toLowerCase();
+    const grid = document.getElementById('documentGrid');
+    const items = document.getElementsByClassName('doc-item');
+    const noResults = document.getElementById('noResults');
+    
+    let visibleCount = 0;
+    
+    for (let i = 0; i < items.length; i++) {
+      const filename = items[i].getElementsByClassName('filename')[0];
+      if (filename) {
+        const text = filename.textContent || filename.innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+          items[i].style.display = '';
+          visibleCount++;
+        } else {
+          items[i].style.display = 'none';
+        }
+      }
+    }
+    
+    noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+</script>
 
 <style>
   .file-icon {
@@ -106,14 +242,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 10px;
+    margin: 0 auto;
+    font-size: 2.5rem;
+    color: white;
   }
+  
   .hover-card {
     transition: all 0.3s ease;
+    border: none;
   }
+  
   .hover-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+  }
+  
+  .gap-3 {
+    gap: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .file-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
+    }
   }
 </style>
 

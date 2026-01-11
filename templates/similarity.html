@@ -70,7 +70,7 @@
   </div>
   {% endif %}
 
-  <!-- Results Table -->
+  <!-- Results with Summaries -->
   <div class="card p-4 mb-4">
     <h5 class="mb-1">
       📊 Hasil Query: "<span class="text-primary">{{ query }}</span>"
@@ -80,50 +80,74 @@
     <p class="text-muted">
       Ditemukan <b class="text-success">{{ total_found }}</b> dokumen relevan
     </p>
-    <a href="/export-csv/{{ query }}" class="btn btn-success btn-sm">
+    <a href="/export-csv/{{ query }}" class="btn btn-success btn-sm mb-3">
       <i class="bi bi-download"></i> Export CSV
     </a>
-    {% endif %} {% if total_found > 0 %}
-    <div class="table-responsive mt-3">
-      <table class="table table-hover">
-        <thead class="table-primary">
-          <tr>
-            <th>No</th>
-            <th>Dokumen</th>
-            <th>Score</th>
-            <th>Match %</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for filename, score in results %} {% set pct = score * 100 %}
-          <tr>
-            <td class="fw-bold">{{ loop.index }}</td>
-            <td>
+    
+    <!-- Document Cards with Ranking and Summary -->
+    {% for filename, score in results %}
+    {% set pct = score * 100 %}
+    <div class="card mb-3 result-card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-1 text-center">
+            <div class="rank-badge">
+              <span class="h4 mb-0">{{ loop.index }}</span>
+            </div>
+          </div>
+          
+          <div class="col-md-8">
+            <h6 class="mb-2">
               <a href="/process/{{ filename }}" class="text-decoration-none">
-                {% if filename.endswith('.pdf') %}📄{% elif
-                filename.endswith('.docx') %}📝{% else %}📋{% endif %}
+                {% if filename.endswith('.pdf') %}📄
+                {% elif filename.endswith('.docx') %}📝
+                {% else %}📋{% endif %}
                 <span class="filename-text">{{ filename }}</span>
               </a>
-            </td>
-            <td>
-              <code class="text-primary">{{ "%.4f"|format(score) }}</code>
-            </td>
-            <td>
-              {% if pct >= 5 %}
-              <span class="badge bg-success">{{ "%.0f"|format(pct) }}%</span>
-              {% elif pct >= 1 %}
-              <span class="badge bg-warning text-dark"
-                >{{ "%.0f"|format(pct) }}%</span
-              >
-              {% else %}
-              <span class="badge bg-secondary">{{ "%.0f"|format(pct) }}%</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </h6>
+            
+            <!-- Ringkasan Dokumen -->
+            <div class="alert alert-light mb-2 p-2">
+              <small class="text-muted">
+                <i class="bi bi-file-text"></i> <strong>Ringkasan:</strong><br>
+                {{ summaries[filename][:250] if summaries and filename in summaries else 'Ringkasan tidak tersedia' }}
+                {% if summaries and filename in summaries and summaries[filename]|length > 250 %}...{% endif %}
+              </small>
+            </div>
+            
+            <div class="mt-2">
+              <a href="/summary/{{ filename }}" class="btn btn-sm btn-outline-info me-2">
+                <i class="bi bi-file-text"></i> Lihat Ringkasan Lengkap
+              </a>
+              <a href="/process/{{ filename }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-gear"></i> Preprocessing
+              </a>
+            </div>
+          </div>
+          
+          <div class="col-md-3 text-center">
+            <div class="score-display">
+              <div class="mb-2">
+                <span class="text-muted small">Similarity Score</span>
+              </div>
+              <div class="mb-2">
+                <code class="h5 text-primary">{{ "%.4f"|format(score) }}</code>
+              </div>
+              <div>
+                {% if pct >= 5 %}
+                <span class="badge bg-success" style="font-size: 1rem; padding: 8px 15px;">{{ "%.0f"|format(pct) }}%</span>
+                {% elif pct >= 1 %}
+                <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 8px 15px;">{{ "%.0f"|format(pct) }}%</span>
+                {% else %}
+                <span class="badge bg-secondary" style="font-size: 1rem; padding: 8px 15px;">{{ "%.0f"|format(pct) }}%</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    {% endfor %}
 
     {% else %}
     <div class="alert alert-warning mt-3">
@@ -134,6 +158,7 @@
   </div>
 
   {% if total_found > 0 %}
+  <!-- Visualisasi Similarity Score -->
   <div class="card p-4 mb-4">
     <h5 class="mb-3">📊 Visualisasi Similarity Score</h5>
     <canvas id="similarityChart" style="max-height: 400px"></canvas>
@@ -145,27 +170,27 @@
 <!-- Inject Chart Data -->
 {% if results and total_found > 0 %}
 <script id="chartData" type="application/json">
-  {
-    "labels": [
-      {% for filename, score in results %}
-      "{{ filename[:35]|replace('"', '\\"') }}..."{% if not loop.last %},{% endif %}
-      {% endfor %}
-    ],
-    "values": [
-      {% for filename, score in results %}
-      {{ score }}{% if not loop.last %},{% endif %}
-      {% endfor %}
-    ]
-  }
+{
+  "labels": [
+    {% for filename, score in results %}
+    "{{ filename[:35]|replace('"', '\\"') }}..."{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ],
+  "values": [
+    {% for filename, score in results %}
+    {{ score }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
 </script>
 {% endif %}
 
 <!-- Inject Query for Highlighting -->
 {% if query %}
 <script id="queryData" type="application/json">
-  {
-    "query": "{{ query|replace('"', '\\"')|replace('\\', '\\\\') }}"
-  }
+{
+  "query": "{{ query|replace('"', '\\"')|replace('\\', '\\\\') }}"
+}
 </script>
 {% endif %}
 
@@ -177,39 +202,43 @@
     var chartDataEl = document.getElementById("chartData");
 
     if (chartDataEl) {
-      var chartData = JSON.parse(chartDataEl.textContent);
-      var labels = chartData.labels;
-      var values = chartData.values;
+      try {
+        var chartData = JSON.parse(chartDataEl.textContent);
+        var labels = chartData.labels;
+        var values = chartData.values;
 
-      var colors = values.map(function (v) {
-        if (v >= 0.05) return "rgba(40,167,69,0.8)";
-        if (v >= 0.01) return "rgba(255,193,7,0.8)";
-        return "rgba(108,117,125,0.8)";
-      });
+        var colors = values.map(function (v) {
+          if (v >= 0.05) return "rgba(40,167,69,0.8)";
+          if (v >= 0.01) return "rgba(255,193,7,0.8)";
+          return "rgba(108,117,125,0.8)";
+        });
 
-      new Chart(document.getElementById("similarityChart"), {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              data: values,
-              backgroundColor: colors,
-              borderColor: colors.map(function (c) {
-                return c.replace("0.8", "1");
-              }),
-              borderWidth: 2,
-              borderRadius: 8,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
+        new Chart(document.getElementById("similarityChart"), {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors.map(function (c) {
+                  return c.replace("0.8", "1");
+                }),
+                borderWidth: 2,
+                borderRadius: 8,
+              },
+            ],
           },
-        },
-      });
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+            },
+          },
+        });
+      } catch (err) {
+        console.error('Error creating chart:', err);
+      }
     }
   });
 
@@ -259,30 +288,34 @@
     var queryDataEl = document.getElementById("queryData");
 
     if (queryDataEl) {
-      var queryData = JSON.parse(queryDataEl.textContent);
-      var currentQuery = queryData.query;
+      try {
+        var queryData = JSON.parse(queryDataEl.textContent);
+        var currentQuery = queryData.query;
 
-      // Save to history
-      var h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
-      h = h.filter(function (x) {
-        return x !== currentQuery;
-      });
-      h.unshift(currentQuery);
-      h = h.slice(0, 5);
-      localStorage.setItem("searchHistory", JSON.stringify(h));
-      displayHistory();
+        // Save to history
+        var h = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+        h = h.filter(function (x) {
+          return x !== currentQuery;
+        });
+        h.unshift(currentQuery);
+        h = h.slice(0, 5);
+        localStorage.setItem("searchHistory", JSON.stringify(h));
+        displayHistory();
 
-      // Highlight query in results
-      var q = currentQuery;
-      document.querySelectorAll(".filename-text").forEach(function (el) {
-        var raw = el.textContent;
-        var escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        var regex = new RegExp("(" + escapedQ + ")", "gi");
-        el.innerHTML = raw.replace(
-          regex,
-          '<mark style="background:yellow; font-weight:bold;">$1</mark>'
-        );
-      });
+        // Highlight query in results
+        var q = currentQuery;
+        document.querySelectorAll(".filename-text").forEach(function (el) {
+          var raw = el.textContent;
+          var escapedQ = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          var regex = new RegExp("(" + escapedQ + ")", "gi");
+          el.innerHTML = raw.replace(
+            regex,
+            '<mark style="background:yellow; font-weight:bold;">$1</mark>'
+          );
+        });
+      } catch (err) {
+        console.error('Error processing query data:', err);
+      }
     }
   });
 </script>
@@ -303,8 +336,32 @@
     }
   }
 
-  .table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
+  .result-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #667eea;
+  }
+
+  .result-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  .rank-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .score-display {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
   }
 </style>
 

@@ -11,6 +11,7 @@ import pickle
 import csv
 import io
 from collections import Counter
+import numpy as np
 
 app = Flask(__name__)
 DOCUMENT_FOLDER = "documents"
@@ -76,65 +77,162 @@ def preprocessing(text):
     }
 
 # ====================================================
-#  SUMMARY (Extractive Summarization using TF-IDF)
+# 3. IMPROVED SUMMARY (Extractive Summarization)
 # ====================================================
 def summarize_text(text, num_sentences=3):
-    import re
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    import numpy as np
-
+    """
+    Extractive summarization menggunakan TF-IDF untuk ranking kalimat
+    
+    Args:
+        text: Teks dokumen yang akan diringkas
+        num_sentences: Jumlah kalimat dalam ringkasan (default: 3)
+    
+    Returns:
+        Dictionary dengan informasi ringkasan
+    """
     # Pisahkan menjadi kalimat
-    sentences = re.split(r'(?<=[.!?]) +', text)
-
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 10]  # Filter kalimat pendek
+    
     # Jika dokumen terlalu pendek
     if len(sentences) <= num_sentences:
-        return text
-
+        return {
+            "summary": text,
+            "original_sentences": len(sentences),
+            "summary_sentences": len(sentences),
+            "compression_ratio": 100.0,
+            "ranked_sentences": []
+        }
+    
+    # Preprocessing untuk setiap kalimat
+    processed_sentences = []
+    for sent in sentences:
+        tokens = preprocessing(sent)
+        processed_sentences.append(" ".join(tokens["stemmed"]))
+    
     # TF-IDF untuk kalimat
     vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(sentences)
-
-    # Hitung skor tiap kalimat (jumlah bobot TF-IDF)
-    scores = tfidf_matrix.sum(axis=1).A1
-
-    # Ambil kalimat dengan skor tertinggi
-    ranked_index = np.argsort(scores)[::-1]
-    selected = [sentences[i] for i in ranked_index[:num_sentences]]
-
-    # Gabungkan ringkasan
-    summary = " ".join(selected)
-    return summary
+    try:
+        tfidf_matrix = vectorizer.fit_transform(processed_sentences)
+        
+        # Hitung skor tiap kalimat (rata-rata bobot TF-IDF)
+        scores = np.asarray(tfidf_matrix.mean(axis=1)).flatten()
+        
+        # Ranking kalimat berdasarkan skor
+        ranked_indices = np.argsort(scores)[::-1]
+        
+        # Ambil top-N kalimat dengan skor tertinggi
+        selected_indices = sorted(ranked_indices[:num_sentences])
+        
+        # Buat ringkasan (urutan sesuai dokumen asli)
+        summary_sentences = [sentences[i] for i in selected_indices]
+        summary = " ".join(summary_sentences)
+        
+        # Informasi tambahan untuk ditampilkan
+        ranked_info = [
+            {
+                "rank": idx + 1,
+                "sentence": sentences[i],
+                "score": float(scores[i]),
+                "selected": i in selected_indices
+            }
+            for idx, i in enumerate(ranked_indices[:10])  # Top 10 untuk referensi
+        ]
+        
+        compression_ratio = (len(summary_sentences) / len(sentences)) * 100
+        
+        return {
+            "summary": summary,
+            "original_sentences": len(sentences),
+            "summary_sentences": len(summary_sentences),
+            "compression_ratio": compression_ratio,
+            "ranked_sentences": ranked_info
+        }
+        
+    except Exception as e:
+        print(f"Error dalam summarization: {e}")
+        # Fallback: ambil N kalimat pertama
+        fallback_summary = " ".join(sentences[:num_sentences])
+        return {
+            "summary": fallback_summary,
+            "original_sentences": len(sentences),
+            "summary_sentences": num_sentences,
+            "compression_ratio": (num_sentences / len(sentences)) * 100,
+            "ranked_sentences": [],
+            "error": str(e)
+        }
 
 # ====================================================
-# 3. Cache Management - Preprocessing semua dokumen
+# 4. Cache Management - Preprocessing semua dokumen
 # ====================================================
 def load_or_create_cache():
     """Load cache atau buat baru jika belum ada"""
+    
+    # Pastikan folder documents ada
+    if not os.path.exists(DOCUMENT_FOLDER):
+        os.makedirs(DOCUMENT_FOLDER)
+        print(f"📁 Folder '{DOCUMENT_FOLDER}' dibuat")
+    
+    # Ambil daftar file yang ada di folder documents
+    files = []
+    for f in os.listdir(DOCUMENT_FOLDER):
+        file_path = os.path.join(DOCUMENT_FOLDER, f)
+        # Hanya ambil file (bukan folder) dengan ekstensi yang valid
+        if os.path.isfile(file_path) and f.split('.')[-1].lower() in ['pdf', 'docx', 'txt']:
+            files.append(f)
+    
+    print(f"📄 Ditemukan {len(files)} dokumen di folder '{DOCUMENT_FOLDER}'")
+    
+    # Cek apakah cache sudah ada
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, "rb") as f:
                 cache = pickle.load(f)
-                print("✅ Cache loaded")
+            
+            # Validasi: apakah semua file di cache masih ada?
+            cache_files = set(cache.keys())
+            current_files = set(files)
+            
+            # Jika file di folder sama dengan di cache, gunakan cache
+            if cache_files == current_files:
+                print("✅ Cache loaded (semua dokumen sudah ter-cache)")
                 return cache
-        except:
-            print("⚠️ Cache corrupt, rebuilding...")
+            else:
+                print("⚠️ Ada perubahan dokumen, rebuilding cache...")
+        except Exception as e:
+            print(f"⚠️ Cache corrupt ({e}), rebuilding...")
     
     # Build cache baru
-    print("🔄 Building cache...")
+    print("🔄 Building cache dari dokumen yang ada...")
     cache = {}
-    files = [f for f in os.listdir(DOCUMENT_FOLDER) if os.path.isfile(os.path.join(DOCUMENT_FOLDER, f))]
     
     for filename in files:
-        path = os.path.join(DOCUMENT_FOLDER, filename)
-        raw_text = read_text(path)
-        processed = preprocessing(raw_text)
-        
-        # Simpan text yang sudah di-stem untuk TF-IDF
-        cache[filename] = {
-            "raw": raw_text,
-            "processed": processed,
-            "stemmed_text": " ".join(processed["stemmed"])
-        }
+        try:
+            path = os.path.join(DOCUMENT_FOLDER, filename)
+            print(f"   Processing: {filename}")
+            
+            raw_text = read_text(path)
+            
+            if not raw_text.strip():
+                print(f"   ⚠️ Warning: {filename} kosong, dilewati")
+                continue
+            
+            processed = preprocessing(raw_text)
+            
+            # Generate summary untuk setiap dokumen
+            summary_info = summarize_text(raw_text, num_sentences=3)
+            
+            # Simpan text yang sudah di-stem untuk TF-IDF
+            cache[filename] = {
+                "raw": raw_text,
+                "processed": processed,
+                "stemmed_text": " ".join(processed["stemmed"]),
+                "summary": summary_info  # Simpan summary di cache
+            }
+            
+        except Exception as e:
+            print(f"   ❌ Error processing {filename}: {e}")
+            continue
     
     # Simpan cache
     with open(CACHE_FILE, "wb") as f:
@@ -188,9 +286,8 @@ def features():
     return render_template("features.html", features=selected)
 
 
-
 # ====================================================
-# 4. Homepage
+# 5. Homepage
 # ====================================================
 @app.route("/")
 def index():
@@ -199,7 +296,7 @@ def index():
 
 
 # ====================================================
-# 5. Baca Dokumen & Preprocessing (dari cache)
+# 6. Baca Dokumen & Preprocessing (dari cache)
 # ====================================================
 @app.route("/process/<filename>")
 def process(filename):
@@ -214,26 +311,70 @@ def process(filename):
                            result=cached_data["processed"])
 
 # ====================================================
-#  SUMMARY ROUTE
+# 7. IMPROVED SUMMARY ROUTE
 # ====================================================
 @app.route("/summary/<filename>")
 def summary(filename):
+    """
+    Menampilkan ringkasan dokumen dengan informasi detail
+    """
     if filename not in document_cache:
         return "File tidak ditemukan", 404
 
-    raw_text = document_cache[filename]["raw"]
-    summary_text = summarize_text(raw_text, num_sentences=3)
+    cached_data = document_cache[filename]
+    raw_text = cached_data["raw"]
+    
+    # Cek apakah summary sudah ada di cache
+    if "summary" in cached_data:
+        summary_info = cached_data["summary"]
+    else:
+        # Generate summary jika belum ada
+        summary_info = summarize_text(raw_text, num_sentences=3)
+        document_cache[filename]["summary"] = summary_info
 
     return render_template(
         "summary.html", 
-        filename=filename, 
-        summary=summary_text,
+        filename=filename,
+        summary_info=summary_info,
         raw=raw_text
     )
 
 
 # ====================================================
-# 6. Hitung Kemiripan Query (OPTIMIZED + FILTERED)
+# 8. BULK SUMMARY - Ringkas semua dokumen
+# ====================================================
+@app.route("/all-summaries")
+def all_summaries():
+    """
+    Menampilkan ringkasan dari semua dokumen
+    """
+    summaries = []
+    
+    for filename in document_cache.keys():
+        cached_data = document_cache[filename]
+        
+        # Ambil summary dari cache atau generate baru
+        if "summary" in cached_data:
+            summary_info = cached_data["summary"]
+        else:
+            summary_info = summarize_text(cached_data["raw"], num_sentences=3)
+            document_cache[filename]["summary"] = summary_info
+        
+        summaries.append({
+            "filename": filename,
+            "summary": summary_info["summary"],
+            "stats": {
+                "original": summary_info["original_sentences"],
+                "compressed": summary_info["summary_sentences"],
+                "ratio": f"{summary_info['compression_ratio']:.1f}%"
+            }
+        })
+    
+    return render_template("all_summaries.html", summaries=summaries)
+
+
+# ====================================================
+# 9. Hitung Kemiripan Query (DENGAN RINGKASAN DOKUMEN)
 # ====================================================
 @app.route("/similarity", methods=["GET", "POST"])
 def similarity():
@@ -255,7 +396,7 @@ def similarity():
         # Cosine Similarity
         sims = cosine_similarity(vectors[0:1], vectors[1:]).flatten()
         
-        # Gabungkan dengan nama file ewe ayam
+        # Gabungkan dengan nama file (format tuple untuk template)
         results = list(zip(filenames, sims))
         
         # ✨ FILTER: Hanya tampilkan dokumen dengan similarity > 0
@@ -264,19 +405,31 @@ def similarity():
         # Sort berdasarkan similarity tertinggi
         results.sort(key=lambda x: x[1], reverse=True)
         
+        # ✨ TAMBAHAN: Buat dictionary untuk summary setiap dokumen
+        summaries = {}
+        for filename in filenames:
+            doc_data = document_cache[filename]
+            if "summary" in doc_data:
+                summaries[filename] = doc_data["summary"]["summary"]
+            else:
+                # Generate summary on-the-fly jika belum ada
+                summaries[filename] = doc_data["raw"][:200] + "..."
+        
         return render_template("similarity.html",
                                query=query,
                                results=results,
+                               summaries=summaries,
                                total_found=len(results))
 
     return render_template("similarity.html",
                            query=None,
                            results=None,
+                           summaries={},
                            total_found=0)
 
 
 # ====================================================
-# 7. Export ke CSV
+# 10. Export ke CSV
 # ====================================================
 @app.route("/export-csv/<query>")
 def export_csv(query):
@@ -320,7 +473,7 @@ def export_csv(query):
 
 
 # ====================================================
-# 8. Statistik Dokumen
+# 11. Statistik Dokumen
 # ====================================================
 @app.route("/statistics")
 def statistics():
@@ -362,35 +515,30 @@ def statistics():
 
 
 # ====================================================
-# 9. Rebuild Cache (jika ada dokumen baru)
+# 12. Download Dokumen Asli
 # ====================================================
-@app.route("/rebuild-cache")
-def rebuild_cache():
-    global document_cache
-    if os.path.exists(CACHE_FILE):
-        os.remove(CACHE_FILE)
-    document_cache = load_or_create_cache()
-    return """
-    <html>
-    <head>
-        <meta http-equiv="refresh" content="2;url=/" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    </head>
-    <body class="bg-light">
-        <div class="container mt-5">
-            <div class="alert alert-success text-center">
-                <h4>✅ Cache berhasil di-rebuild!</h4>
-                <p>Anda akan diarahkan ke homepage dalam 2 detik...</p>
-                <a href="/" class="btn btn-primary mt-3">Kembali Sekarang</a>
-            </div>
-        </div>
-    </body>
-    </html>
+@app.route("/download/<filename>")
+def download_document(filename):
     """
+    Mengunduh dokumen asli
+    """
+    if filename not in document_cache:
+        return "File tidak ditemukan", 404
+    
+    file_path = os.path.join(DOCUMENT_FOLDER, filename)
+    
+    if not os.path.exists(file_path):
+        return "File tidak ditemukan di sistem", 404
+    
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 # ====================================================
-# 10. Main
+# 13. Main
 # ====================================================
 if __name__ == "__main__":
     app.run(debug=True)
