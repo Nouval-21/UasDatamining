@@ -1,0 +1,97 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-4">
+  <i class="bi bi-book-fill" style="color: #0891b2"></i> Inverted Index
+</h3>
+
+<div
+  class="card p-4 mb-4"
+  style="
+    background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+    color: white;
+  "
+>
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <h5 class="mb-2">
+        <i class="bi bi-info-circle-fill"></i> Tentang Inverted Index
+      </h5>
+      <p class="mb-0">
+        Inverted Index adalah struktur data yang memetakan setiap kata (term) ke
+        daftar dokumen yang mengandung kata tersebut. Ini memungkinkan pencarian
+        dokumen yang efisien.
+      </p>
+    </div>
+    <div class="col-md-4 text-center">
+      <div class="display-4"><i class="bi bi-search"></i></div>
+      <p class="mb-0">{{ index|length }} Terms</p>
+    </div>
+  </div>
+</div>
+
+<div class="card p-4">
+  <h5 class="mb-3"><i class="bi bi-table"></i> Index Mapping</h5>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-primary">
+        <tr>
+          <th style="width: 30%">Kata (Term)</th>
+          <th style="width: 70%">Dokumen yang Mengandung</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for term, docs in index.items() %}
+        <tr>
+          <td>
+            <i class="bi bi-tag-fill me-2" style="color: #0891b2"></i>
+            <strong>{{ term }}</strong>
+          </td>
+          <td>
+            <div class="d-flex flex-wrap gap-2">
+              {% if docs is string %} {% for doc in docs.split(',') %}
+              <span
+                class="badge"
+                style="
+                  background: linear-gradient(90deg, #059669 0%, #0284c7 100%);
+                "
+              >
+                {{ doc.strip() }}
+              </span>
+              {% endfor %} {% elif docs is iterable %} {% for doc in docs %}
+              <span
+                class="badge"
+                style="
+                  background: linear-gradient(90deg, #059669 0%, #0284c7 100%);
+                "
+              >
+                {{ doc }}
+              </span>
+              {% endfor %} {% else %}
+              <span
+                class="badge"
+                style="
+                  background: linear-gradient(90deg, #059669 0%, #0284c7 100%);
+                "
+              >
+                {{ docs }}
+              </span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .gap-2 {
+    gap: 0.5rem;
+  }
+  .table-hover tbody tr:hover {
+    background-color: rgba(8, 145, 178, 0.1);
+  }
+</style>
+
+{% endblock %}

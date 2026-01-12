@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title or 'IR Bahasa Pemograman' }}</title>
+
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+
+    <style>
+      :root {
+        /* Data Mining Color Palette */
+        --dm-primary: #1e3a8a;
+        --dm-secondary: #0891b2;
+        --dm-accent: #059669;
+        --dm-warning: #ea580c;
+        --dm-info: #0284c7;
+        --dm-dark: #0f172a;
+        --dm-light: #f1f5f9;
+        --gradient-start: #1e3a8a;
+        --gradient-end: #0891b2;
+        --bg-light: #f1f5f9;
+        --bg-dark: #0f172a;
+        --card-light: #ffffff;
+        --card-dark: #1e293b;
+        --text-light: #1e293b;
+        --text-dark: #e2e8f0;
+      }
+
+      /* ==========================================
+         LIGHT MODE (Default)
+         ========================================== */
+      body {
+        background: linear-gradient(
+          135deg,
+          #f1f5f9 0%,
+          #e2e8f0 50%,
+          #cbd5e1 100%
+        );
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-light);
+        transition: all 0.3s ease;
+      }
+
+      /* ==========================================
+         DARK MODE
+         ========================================== */
+      body.dark-mode {
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #334155 100%
+        );
+        color: var(--text-dark);
+      }
+
+      body.dark-mode .card {
+        background-color: var(--card-dark) !important;
+        color: var(--text-dark);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(8, 145, 178, 0.3);
+      }
+
+      body.dark-mode .table {
+        color: var(--text-dark);
+      }
+
+      body.dark-mode .table-primary {
+        background-color: rgba(30, 58, 138, 0.3) !important;
+        color: var(--text-dark) !important;
+      }
+
+      body.dark-mode .alert {
+        background-color: rgba(8, 145, 178, 0.2) !important;
+        color: var(--text-dark);
+        border-color: rgba(8, 145, 178, 0.4);
+      }
+
+      body.dark-mode .form-control {
+        background-color: #1e293b;
+        color: var(--text-dark);
+        border-color: #334155;
+      }
+
+      body.dark-mode .form-control:focus {
+        background-color: #334155;
+        color: var(--text-dark);
+        border-color: var(--dm-secondary);
+      }
+
+      /* ==========================================
+         NAVBAR
+         ========================================== */
+      .navbar {
+        background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%) !important;
+        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+        padding: 1rem 0;
+      }
+
+      .navbar-brand {
+        font-weight: 700;
+        font-size: 1.4rem;
+        letter-spacing: 0.5px;
+      }
+
+      .navbar .btn {
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .navbar .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(8, 145, 178, 0.4);
+      }
+
+      /* Dark Mode Toggle */
+      .form-check-input {
+        cursor: pointer;
+        width: 50px;
+        height: 25px;
+      }
+
+      .form-check-label {
+        cursor: pointer;
+        user-select: none;
+      }
+
+      /* ==========================================
+         CARDS
+         ========================================== */
+      .card {
+        border: 1px solid rgba(8, 145, 178, 0.2);
+        box-shadow: 0 10px 30px rgba(30, 58, 138, 0.15);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        transition: all 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(8, 145, 178, 0.25);
+        border-color: rgba(8, 145, 178, 0.4);
+      }
+
+      /* ==========================================
+         BUTTONS
+         ========================================== */
+      .btn-primary {
+        background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 10px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.4);
+      }
+
+      .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(8, 145, 178, 0.6);
+      }
+
+      .btn-success {
+        background: linear-gradient(90deg, #059669 0%, #0284c7 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .btn-success:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
+      }
+
+      .btn-info {
+        background: linear-gradient(90deg, #0284c7 0%, #0891b2 100%);
+        border: none;
+      }
+
+      .btn-warning {
+        background: linear-gradient(90deg, #ea580c 0%, #dc2626 100%);
+        border: none;
+      }
+
+      /* ==========================================
+         TABLE
+         ========================================== */
+      .table thead {
+        background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%);
+        color: white;
+      }
+
+      .table-hover tbody tr:hover {
+        background-color: rgba(8, 145, 178, 0.1);
+        cursor: pointer;
+      }
+
+      /* ==========================================
+         BADGES
+         ========================================== */
+      .badge {
+        border-radius: 20px;
+        padding: 8px 15px;
+        font-weight: 600;
+      }
+
+      .badge.bg-primary {
+        background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%) !important;
+      }
+
+      .badge.bg-success {
+        background: linear-gradient(90deg, #059669 0%, #0284c7 100%) !important;
+      }
+
+      .badge.bg-info {
+        background: linear-gradient(90deg, #0284c7 0%, #0891b2 100%) !important;
+      }
+
+      /* ==========================================
+         CONTAINER
+         ========================================== */
+      .container {
+        max-width: 1200px;
+      }
+
+      /* ==========================================
+         FOOTER
+         ========================================== */
+      footer {
+        margin-top: 60px;
+        padding: 20px 0;
+        background: rgba(30, 58, 138, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      /* ==========================================
+         ANIMATIONS
+         ========================================== */
+      @keyframes slideInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .navbar {
+        animation: slideInDown 0.5s ease-out;
+      }
+
+      /* ==========================================
+         SCROLLBAR (Dark Mode)
+         ========================================== */
+      body.dark-mode::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      body.dark-mode::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+      }
+
+      body.dark-mode::-webkit-scrollbar-thumb {
+        background: var(--dm-secondary);
+        border-radius: 5px;
+      }
+
+      /* ==========================================
+         RESPONSIVE
+         ========================================== */
+      @media (max-width: 768px) {
+        .navbar-brand {
+          font-size: 1.1rem;
+        }
+
+        h3 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <i class="bi bi-file-earmark-text"></i> IR Bahasa Pemograman
+        </a>
+
+        <div class="d-flex align-items-center">
+          <!-- Dark Mode Toggle -->
+          <div class="form-check form-switch me-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="darkModeToggle"
+            />
+            <label class="form-check-label text-white" for="darkModeToggle">
+              <i class="bi bi-moon-stars-fill"></i>
+            </label>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <a href="/" class="btn btn-light btn-sm me-2">
+            <i class="bi bi-house-fill"></i> Beranda aplikasi
+          </a>
+          <a href="/similarity" class="btn btn-light btn-sm me-2">
+            <i class="bi bi-search"></i> Pencarian berdasarkan isi dan ranking
+          </a>
+          <a href="/statistics" class="btn btn-light btn-sm">
+            <i class="bi bi-bar-chart-fill"></i> Statistik
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4 mb-4">{% block content %}{% endblock %}</div>
+
+    <!-- Footer -->
+    <footer class="text-center text-white">
+      <div class="container">
+        <small>
+          <i class="bi bi-code-slash"></i> IR Bahasa Pemograman
+          <br />
+          <span class="text-white-50"
+            >Powered by Flask, TF-IDF & Cosine Similarity</span
+          >
+        </small>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dark Mode Script -->
+    <script>
+      const darkModeToggle = document.getElementById("darkModeToggle");
+      const body = document.body;
+
+      // Load saved preference
+      if (localStorage.getItem("darkMode") === "enabled") {
+        body.classList.add("dark-mode");
+        darkModeToggle.checked = true;
+      }
+
+      // Toggle dark mode
+      darkModeToggle.addEventListener("change", () => {
+        if (darkModeToggle.checked) {
+          body.classList.add("dark-mode");
+          localStorage.setItem("darkMode", "enabled");
+        } else {
+          body.classList.remove("dark-mode");
+          localStorage.setItem("darkMode", "disabled");
+        }
+      });
+    </script>
+  </body>
+</html>

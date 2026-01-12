@@ -1,0 +1,6 @@
+Flask
+nltk
+Sastrawi
+python-docx
+PyPDF2
+scikit-learn

@@ -1,0 +1,247 @@
+{% extends "layout.html" %} {% block content %}
+
+<!-- Additional Features -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card hover-card">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3" style="font-size: 2.5rem; color: #1e3a8a">
+          <i class="bi bi-book-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5 class="mb-1">Inverted Index</h5>
+        </div>
+        <a href="/inverted-index" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card hover-card">
+      <div class="card-body d-flex align-items-center">
+        <div class="me-3" style="font-size: 2.5rem; color: #0891b2">
+          <i class="bi bi-funnel-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5 class="mb-1">Feature Selection</h5>
+        </div>
+        <a href="/features" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Documents Section -->
+<div id="documents" class="card mb-4">
+  <div
+    class="card-header"
+    style="
+      background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%);
+      color: white;
+    "
+  >
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-folder-fill"></i> Daftar Dokumen</h5>
+      <span class="badge bg-light text-dark">{{ files|length }} files</span>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if files %}
+    <!-- Search Box -->
+    <div class="mb-4">
+      <input
+        type="text"
+        id="searchDoc"
+        class="form-control form-control-lg"
+        placeholder=" Cari Nama Dokumen..."
+        onkeyup="filterDocuments()"
+      />
+    </div>
+
+    <!-- Document Grid -->
+    <div class="row" id="documentGrid">
+      {% for f in files %}
+      <div class="col-md-6 col-lg-4 mb-4 doc-item">
+        <div class="card h-100 hover-card">
+          <div class="card-body text-center">
+            <!-- Icon -->
+            {% if f.endswith('.pdf') %}
+            <div
+              class="file-icon mb-3"
+              style="
+                background: linear-gradient(135deg, #0891b2 0%, #059669 100%);
+              "
+            >
+              <i class="bi bi-file-earmark-pdf-fill"></i>
+            </div>
+            <small class="text-muted">PDF Document</small>
+
+            {% elif f.endswith('.docx') %}
+            <div
+              class="file-icon mb-3"
+              style="
+                background: linear-gradient(135deg, #0284c7 0%, #0891b2 100%);
+              "
+            >
+              <i class="bi bi-file-earmark-word-fill"></i>
+            </div>
+            <small class="text-muted">Word Document</small>
+
+            {% elif f.endswith('.txt') %}
+            <div
+              class="file-icon mb-3"
+              style="
+                background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+              "
+            >
+              <i class="bi bi-file-earmark-text-fill"></i>
+            </div>
+            <small class="text-muted">Text File</small>
+
+            {% else %}
+            <div
+              class="file-icon mb-3"
+              style="
+                background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+              "
+            >
+              <i class="bi bi-file-earmark-fill"></i>
+            </div>
+            <small class="text-muted">Document</small>
+            {% endif %}
+
+            <!-- Filename -->
+            <h6
+              class="card-title mt-2 filename"
+              style="min-height: 48px; line-height: 1.4"
+            >
+              {{ f if f|length <= 35 else f[:32] + "..." }}
+            </h6>
+
+            <!-- Actions -->
+            <div class="btn-group w-100 mt-3" role="group">
+              <a
+                href="/process/{{ f }}"
+                class="btn btn-sm btn-outline-primary"
+                title="Preprocessing"
+              >
+                <i class="bi bi-gear-fill"></i>
+              </a>
+              <a
+                href="/summary/{{ f }}"
+                class="btn btn-sm btn-outline-success"
+                title="Ringkasan"
+              >
+                <i class="bi bi-file-text"></i>
+              </a>
+              <a
+                href="/download/{{ f }}"
+                class="btn btn-sm btn-outline-info"
+                title="Download"
+              >
+                <i class="bi bi-download"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- No Results -->
+    <div
+      id="noResults"
+      class="alert alert-warning text-center"
+      style="display: none"
+    >
+      <i class="bi bi-search"></i> Tidak ada dokumen yang cocok dengan
+      pencarian.
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+      <i class="bi bi-folder-x" style="font-size: 5rem; color: #cbd5e1"></i>
+      <h4 class="text-muted mt-3">Tidak ada dokumen</h4>
+      <p class="text-muted">
+        Tambahkan file (.txt, .pdf, .docx) ke folder <code>/documents</code>
+      </p>
+      <p class="text-muted small">Restart aplikasi untuk memuat dokumen baru</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function scrollToDocuments() {
+    document.getElementById("documents").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function filterDocuments() {
+    const input = document.getElementById("searchDoc");
+    const filter = input.value.toLowerCase();
+    const grid = document.getElementById("documentGrid");
+    const items = document.getElementsByClassName("doc-item");
+    const noResults = document.getElementById("noResults");
+
+    let visibleCount = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const filename = items[i].getElementsByClassName("filename")[0];
+      if (filename) {
+        const text = filename.textContent || filename.innerText;
+        if (text.toLowerCase().indexOf(filter) > -1) {
+          items[i].style.display = "";
+          visibleCount++;
+        } else {
+          items[i].style.display = "none";
+        }
+      }
+    }
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  }
+</script>
+
+<style>
+  .file-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 2.5rem;
+    color: white;
+  }
+
+  .hover-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(8, 145, 178, 0.2);
+  }
+
+  .hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(8, 145, 178, 0.2);
+    border-color: rgba(8, 145, 178, 0.4);
+  }
+
+  .gap-3 {
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .file-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
+    }
+  }
+</style>
+
+{% endblock %}

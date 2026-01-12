@@ -1,0 +1,287 @@
+{% extends "layout.html" %} {% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h3 class="mb-0">
+    <i class="bi bi-file-text-fill" style="color: #0891b2"></i> Ringkasan
+    Dokumen
+  </h3>
+  <div>
+    <a href="/process/{{ filename }}" class="btn btn-info me-2">
+      <i class="bi bi-gear-fill"></i> Lihat Preprocessing
+    </a>
+    <a href="/" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Kembali
+    </a>
+  </div>
+</div>
+
+<!-- File Info -->
+<div
+  class="alert"
+  style="
+    background: rgba(8, 145, 178, 0.1);
+    border-left: 4px solid #0891b2;
+    color: #0f172a;
+  "
+>
+  <div class="d-flex align-items-center">
+    <i
+      class="bi bi-file-earmark-text-fill"
+      style="font-size: 2rem; margin-right: 15px; color: #0891b2"
+    ></i>
+    <div>
+      <h5 class="mb-0">{{ filename }}</h5>
+      <small
+        >Dokumen telah diringkas menggunakan extractive summarization dengan
+        TF-IDF</small
+      >
+    </div>
+  </div>
+</div>
+
+<!-- Summary Box -->
+<div
+  class="card mb-4"
+  style="
+    background: linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%);
+    color: white;
+  "
+>
+  <div class="card-body p-4">
+    <h4 class="mb-3"><i class="bi bi-star-fill"></i> Ringkasan Dokumen</h4>
+    <p class="lead mb-0" style="line-height: 1.8; font-size: 1.1rem">
+      {{ summary_info.summary }}
+    </p>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div
+      class="card p-4 text-center h-100"
+      style="
+        background: linear-gradient(135deg, #0891b2 0%, #059669 100%);
+        color: white;
+      "
+    >
+      <i class="bi bi-list-ol" style="font-size: 3rem"></i>
+      <h2 class="mt-3 mb-2">
+        {{ summary_info.original_sentences|default(0) }}
+      </h2>
+      <p class="mb-0">Kalimat Asli</p>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div
+      class="card p-4 text-center h-100"
+      style="
+        background: linear-gradient(135deg, #059669 0%, #0284c7 100%);
+        color: white;
+      "
+    >
+      <i class="bi bi-file-text" style="font-size: 3rem"></i>
+      <h2 class="mt-3 mb-2">{{ summary_info.summary_sentences|default(0) }}</h2>
+      <p class="mb-0">Kalimat Ringkasan</p>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div
+      class="card p-4 text-center h-100"
+      style="
+        background: linear-gradient(135deg, #0284c7 0%, #0891b2 100%);
+        color: white;
+      "
+    >
+      <i class="bi bi-percent" style="font-size: 3rem"></i>
+      <h2 class="mt-3 mb-2">
+        {{ "%.1f"|format(summary_info.compression_ratio|default(0)) }}%
+      </h2>
+      <p class="mb-0">Rasio Kompresi</p>
+    </div>
+  </div>
+</div>
+
+<!-- Sentence Ranking -->
+{% if summary_info.ranked_sentences %}
+<div class="card mb-4">
+  <div
+    class="card-header"
+    style="
+      background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%);
+      color: white;
+    "
+  >
+    <h5 class="mb-0">
+      <i class="bi bi-trophy-fill"></i> Ranking Kalimat Berdasarkan TF-IDF (Top
+      10)
+    </h5>
+  </div>
+  <div class="card-body">
+    <div
+      class="alert"
+      style="background: rgba(8, 145, 178, 0.1); border-left: 3px solid #0891b2"
+    >
+      <i class="bi bi-info-circle"></i>
+      Kalimat dengan <span class="badge bg-success">badge hijau</span> dipilih
+      untuk ringkasan berdasarkan skor TF-IDF tertinggi.
+    </div>
+
+    {% for item in summary_info.ranked_sentences %}
+    <div class="sentence-rank {% if item.selected %}selected{% endif %} mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <span
+            class="badge {% if item.selected %}bg-success{% else %}bg-secondary{% endif %}"
+          >
+            <i class="bi bi-hash"></i> Rank {{ item.rank }}
+          </span>
+          {% if item.selected %}
+          <span class="badge bg-success ms-2">
+            <i class="bi bi-check-circle-fill"></i> Terpilih
+          </span>
+          {% endif %}
+        </div>
+        <span
+          class="badge"
+          style="background: linear-gradient(90deg, #1e3a8a 0%, #0891b2 100%)"
+        >
+          <i class="bi bi-bar-chart-fill"></i> Score: {{
+          "%.4f"|format(item.score) }}
+        </span>
+      </div>
+      <p class="mb-0" style="line-height: 1.7">{{ item.sentence }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Original Document -->
+<div class="card mb-4">
+  <div class="card-header" style="background: #64748b; color: white">
+    <h5 class="mb-0">
+      <i class="bi bi-file-earmark-text"></i> Dokumen Asli (Original)
+    </h5>
+  </div>
+  <div class="card-body">
+    <div
+      style="
+        max-height: 400px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid rgba(8, 145, 178, 0.2);
+      "
+    >
+      <pre
+        style="
+          white-space: pre-wrap;
+          margin: 0;
+          font-family: inherit;
+          line-height: 1.7;
+        "
+      >
+{{ raw }}</pre
+      >
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Chart -->
+<div class="card">
+  <div
+    class="card-header"
+    style="
+      background: linear-gradient(90deg, #059669 0%, #0284c7 100%);
+      color: white;
+    "
+  >
+    <h5 class="mb-0">
+      <i class="bi bi-bar-chart-line-fill"></i> Perbandingan Visual
+    </h5>
+  </div>
+  <div class="card-body">
+    <canvas id="comparisonChart" style="max-height: 300px"></canvas>
+  </div>
+</div>
+
+<!-- Chart Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('comparisonChart');
+    if (!ctx) return;
+
+    try {
+      const originalSentences = {{ summary_info.original_sentences|default(0) }};
+      const summarySentences = {{ summary_info.summary_sentences|default(0) }};
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Kalimat Asli', 'Kalimat Ringkasan'],
+          datasets: [{
+            label: 'Jumlah Kalimat',
+            data: [originalSentences, summarySentences],
+            backgroundColor: [
+              'rgba(8, 145, 178, 0.7)',
+              'rgba(5, 150, 105, 0.7)'
+            ],
+            borderColor: [
+              'rgba(8, 145, 178, 1)',
+              'rgba(5, 150, 105, 1)'
+            ],
+            borderWidth: 2,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Error creating comparison chart:', err);
+    }
+  });
+</script>
+
+<style>
+  .sentence-rank {
+    background: #f8f9fa;
+    border-left: 4px solid #94a3b8;
+    padding: 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .sentence-rank:hover {
+    background: #e2e8f0;
+    transform: translateX(5px);
+  }
+
+  .sentence-rank.selected {
+    background: rgba(5, 150, 105, 0.1);
+    border-left-color: #059669;
+  }
+
+  .sentence-rank.selected:hover {
+    background: rgba(5, 150, 105, 0.15);
+  }
+</style>
+
+{% endblock %}

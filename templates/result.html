@@ -1,0 +1,35 @@
+{% extends "layout.html" %} {% block content %}
+
+<h3 class="mb-3">Hasil Preprocessing: {{ filename }}</h3>
+
+<a href="/summary/{{ filename }}" class="btn btn-warning mt-3">
+  Lihat Ringkasan Dokumen
+</a>
+
+<div class="card p-4 mb-4">
+  <h5>Teks Asli</h5>
+  <pre style="white-space: pre-wrap">{{ raw }}</pre>
+</div>
+
+<div class="card p-4 mb-4">
+  <h5>Case Folding</h5>
+  <pre>{{ result.casefold }}</pre>
+</div>
+
+<div class="card p-4 mb-4">
+  <h5>Tokenizing</h5>
+  <p>{{ result.tokens }}</p>
+</div>
+
+<div class="card p-4 mb-4">
+  <h5>Filtering Stopword</h5>
+  <p>{{ result.filtered }}</p>
+</div>
+
+<div class="card p-4 mb-4">
+  <h5>Stemming</h5>
+  <p>{{ result.stemmed }}</p>
+  <p><b>Jumlah Kata Dasar:</b> {{ result.stemmed|length }}</p>
+</div>
+
+{% endblock %}
